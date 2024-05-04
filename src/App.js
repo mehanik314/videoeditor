@@ -1,38 +1,36 @@
 import React, { useState } from 'react';
 import JSZip from 'jszip';
-
+import MyVideo from './components/MyVideo'
 function App() {
-  const [mainVideos, setMainVideo] = useState(null);
+  const [mainVideos, setMainVideos] = useState([]);
   const [videoURLs, setVideoURLs] = useState([]);
-  const [transition, setTransition] = useState(false);
-  const [keywords, setKeywords] = useState('');
-  const [additionalKeywords, setAdditionalKeywords] = useState('');
 
   const handleMainVideoChange = (event) => {
-    setMainVideo(event.target.files);
-  };
-
-  const handleCheckboxChange = () => {
-    setTransition(!transition);
-  };
-
-  const handleKeywordsChange = (event) => {
-    setKeywords(event.target.value);
-  };
-
-  const handleAdditionalKeywordsChange = (event) => {
-    setAdditionalKeywords(event.target.value);
+    setMainVideos(event.target.files);
   };
 
   const handleConcatenateVideos = async () => {
-    const formData = new FormData();
-    for (let i = 0; i < mainVideos.length; i++) {
-      formData.append('main_videos', mainVideos[i]);
+    if (!mainVideos || mainVideos.length === 0) {
+      alert("Please select at least one video file.");
+      return;
     }
-    formData.append('transition', transition ? '1' : '0');
-    formData.append('keywords', keywords);
-    formData.append('additional_keywords', additionalKeywords);
 
+    // Задаем последовательности напрямую в коде
+    const sequences = [
+      ["20 лет.mp4", "Девочка.mp4", "Мужчина.mp4"],
+      ["Мужчина.mp4","20 лет.mp4"],
+      ["20 лет.mp4", "Женщина.mp4", "Михаил.mp4"],
+      ["21 год.mp4", "Мальчик.mp4", "Кирилл.mp4"],
+      ["22 года.mp4", "20 лет.mp4"],
+      ["22 года.mp4", "20 лет.mp4", "Денис.mp4"]
+    ];
+
+    const formData = new FormData();
+    formData.append('sequences', JSON.stringify(sequences));  // Добавление JSON как строки
+    for (let i = 0; i < mainVideos.length; i++) {
+    formData.append('main_videos', mainVideos[i]);
+    }
+    
     try {
       const response = await fetch('http://127.0.0.1:8000/upload/', {
         method: 'POST',
@@ -43,19 +41,9 @@ function App() {
         throw new Error('Ошибка загрузки видео');
       }
 
-      
-      const blob = await response.blob();
-      const zip = new JSZip();
-      
-      const content = await zip.loadAsync(blob);
-      const urls = [];
-      
-      for(const fileName of Object.keys(content.files)) {
-        const fileData = await content.files[fileName].async("blob");
-        const url = URL.createObjectURL(fileData);
-        urls.push(url);
-      }
-      setVideoURLs(urls);
+      // Предположим, что сервер возвращает URL сгенерированных видео
+      // const urlData = await response.json();
+      // setVideoURLs(urlData.files);  // Обновляем состояние с URL видео
     } catch (error) {
       console.error('Ошибка:', error);
     }
@@ -65,16 +53,13 @@ function App() {
     <div className='wrapper'>
       <h1>Upload Videos</h1>
       <input type="file" onChange={handleMainVideoChange} accept="video/mp4" multiple />
-      <input type="text" placeholder="Ключевые слова" value={keywords} onChange={handleKeywordsChange} />
-      <input type="text" placeholder="Дополнительные ключевые слова" value={additionalKeywords} onChange={handleAdditionalKeywordsChange} />
       <button onClick={handleConcatenateVideos}>Объединить видео</button>
-      <div className='transition'>
-        <input type='checkbox' onChange={handleCheckboxChange} checked={transition}/>
-        <p>Плавный переход</p>
-      </div>
       {videoURLs.map((url, index) => (
         <video key={index} controls src={url} width='860' height='480' />
       ))}
+      <div>
+         <MyVideo />  
+      </div>
     </div>
   );
 }
