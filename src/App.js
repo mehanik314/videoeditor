@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import JSZip from 'jszip';
-import MyVideo from './components/MyVideo'
 function App() {
   const [mainVideos, setMainVideos] = useState([]);
   const [videoURLs, setVideoURLs] = useState([]);
+  const [segmentsInput, setSegmentsInput] = useState('');
 
   const handleMainVideoChange = (event) => {
     setMainVideos(event.target.files);
+  };
+
+  const handleSegmentsInputChange = (event) => {
+    setSegmentsInput(event.target.value);
   };
 
   const handleConcatenateVideos = async () => {
@@ -27,8 +31,9 @@ function App() {
 
     const formData = new FormData();
     formData.append('sequences', JSON.stringify(sequences));  // Добавление JSON как строки
+    formData.append('segments', segmentsInput);  // Добавление информации о сегментах
     for (let i = 0; i < mainVideos.length; i++) {
-    formData.append('main_videos', mainVideos[i]);
+      formData.append('main_videos', mainVideos[i]);
     }
     
     try {
@@ -53,13 +58,11 @@ function App() {
     <div className='wrapper'>
       <h1>Upload Videos</h1>
       <input type="file" onChange={handleMainVideoChange} accept="video/mp4" multiple />
+      <input type="text" placeholder="Enter segments or timestamps" value={segmentsInput} onChange={handleSegmentsInputChange} />
       <button onClick={handleConcatenateVideos}>Объединить видео</button>
       {videoURLs.map((url, index) => (
         <video key={index} controls src={url} width='860' height='480' />
       ))}
-      <div>
-         <MyVideo />  
-      </div>
     </div>
   );
 }
